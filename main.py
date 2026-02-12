@@ -52,14 +52,21 @@ def parse_arguments():
 
 
 def main():
-    show_banner()
     args = parse_arguments()
 
-    if not validate_url(args.url):
-        print("[!] Invalid URL format.")
+    try:
+        validate_url(args.url)
+    except ValueError as e:
+        print(f"[!] {e}")
         sys.exit(1)
 
     target = normalize_url(args.url)
+
+    show_banner(
+        target=target,
+        mode="Standard",
+        version="v0.1"
+    )
 
     print(f"[+] Target: {target}")
     print(f"[+] Wordlist: {args.wordlist}")
@@ -83,7 +90,6 @@ def main():
     if args.output:
         reporter.save_json(args.output)
         print(f"[+] Report saved to {args.output}")
-
 
 if __name__ == "__main__":
     main()
