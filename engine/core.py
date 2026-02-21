@@ -1,6 +1,5 @@
 import requests
-import hashlib
-from typing import Optional, Dict, Any
+from typing import Optional, Dict
 
 
 class RequestEngine:
@@ -14,8 +13,8 @@ class RequestEngine:
         self.timeout = timeout
         self.proxy = proxy
         self.verify_ssl = verify_ssl
-        self.session = requests.Session()
 
+        self.session = requests.Session()
         self.session.headers.update({
             "User-Agent": "APDE/0.1 (Automatic Parameter Discovery Engine)"
         })
@@ -55,48 +54,3 @@ class Injector:
     @staticmethod
     def build_header(param: str):
         return {param: Injector.TEST_VALUE}
-
-
-class Analyzer:
-
-    LENGTH_THRESHOLD = 40
-
-    @staticmethod
-    def fingerprint(response):
-        if not response:
-            return None
-        return hashlib.md5(response.text.encode()).hexdigest()
-
-    @staticmethod
-    def compare(base, new):
-        if not base or not new:
-            return None
-
-        length_diff = abs(len(base.text) - len(new.text))
-
-        return {
-            "status_changed": base.status_code != new.status_code,
-            "length_diff": length_diff,
-            "redirected": len(new.history) > 0,
-            "reflected": Injector.TEST_VALUE in new.text,
-            "fingerprint_changed":
-                Analyzer.fingerprint(base) != Analyzer.fingerprint(new)
-        }
-
-    @staticmethod
-    def is_interesting(result):
-        if not result:
-            return False
-
-        if result["status_changed"]:
-            return True
-        if result["length_diff"] > Analyzer.LENGTH_THRESHOLD:
-            return True
-        if result["redirected"]:
-            return True
-        if result["reflected"]:
-            return True
-        if result["fingerprint_changed"]:
-            return True
-
-        return False
