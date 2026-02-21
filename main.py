@@ -59,7 +59,7 @@ def parse_arguments():
 
 
 # ===============================
-# Main
+# Utilities
 # ===============================
 
 def load_wordlist(path: str):
@@ -70,13 +70,23 @@ def load_wordlist(path: str):
         sys.exit(1)
 
     with open(file_path, "r", encoding="utf-8") as f:
-        return [line.strip() for line in f if line.strip()]
+        words = [line.strip() for line in f if line.strip()]
 
+    if not words:
+        print("[!] Wordlist is empty.")
+        sys.exit(1)
+
+    return words
+
+
+# ===============================
+# Main Execution
+# ===============================
 
 def main():
     args = parse_arguments()
 
-    # URL Validation
+    # Validate URL
     try:
         validate_url(args.url)
     except ValueError as e:
@@ -85,38 +95,40 @@ def main():
 
     target = normalize_url(args.url)
 
-    # Banner
+    # Show ASCII Banner
     show_banner(
         target=target,
-        mode="Standard",
+        mode="GET",
         version="v1.0"
     )
 
-    print(f"[+] Target: {target}")
-    print(f"[+] Wordlist: {args.wordlist}")
-    print(f"[+] Timeout: {args.timeout}")
-    print(f"[+] Delay: {args.delay}")
-    print("-" * 50)
+    print(f"[+] Wordlist : {args.wordlist}")
+    print(f"[+] Timeout  : {args.timeout}s")
+    print(f"[+] Delay    : {args.delay}s")
+    print("-" * 55)
 
     # Load wordlist
     wordlist = load_wordlist(args.wordlist)
 
-    # Config object (new architecture)
+    # Build configuration
     config = ScanConfig(
         target=target,
         timeout=args.timeout,
         delay=args.delay
     )
 
-    # Scanner
+    # Initialize scanner
     scanner = APDEScanner(config)
 
-    # Run scans (you can expand modes later)
-    results = scanner.scan_get(wordlist)
+    # Run scan safely
+    try:
+        results = scanner.scan_get(wordlist)
+    except KeyboardInterrupt:
+        print("\n[!] Scan interrupted by user.")
+        sys.exit(0)
 
     # Reporting
     reporter = Reporter(results)
-
     reporter.print_summary()
 
     if args.output:
