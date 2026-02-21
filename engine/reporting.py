@@ -1,4 +1,5 @@
 import json
+import os
 from .utils import timestamp
 
 
@@ -19,25 +20,18 @@ class Reporter:
             print(f"  Reflected      : {item['analysis']['reflected']}")
             print()
 
-    def save_json(self, findings: list, output_file: str):
+    def save_json(self, findings: list, output_dir="reports"):
+        os.makedirs(output_dir, exist_ok=True)
+
+        filename = f"{output_dir}/apde_{timestamp()}.json"
+
         report = {
             "generated_at": timestamp(),
             "total_findings": len(findings),
             "findings": findings
         }
 
-        with open(output_file, "w") as f:
+        with open(filename, "w", encoding="utf-8") as f:
             json.dump(report, f, indent=4)
 
-    def score(self, findings: list):
-        score = 0
-        for item in findings:
-            if item["analysis"]["status_changed"]:
-                score += 3
-            if item["analysis"]["reflected"]:
-                score += 3
-            if item["analysis"]["length_diff"] > 100:
-                score += 2
-            if item["analysis"]["redirected"]:
-                score += 1
-        return score
+        return filename
