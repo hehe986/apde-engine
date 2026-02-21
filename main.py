@@ -129,7 +129,7 @@ def main():
 
     # Reporting
     reporter = Reporter(results)
-    reporter.print_summary()
+    reporter.console()
 
     if args.output:
         reporter.save_json(args.output)
@@ -138,3 +138,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
