@@ -2,23 +2,26 @@ import sys
 from urllib.parse import urlparse
 
 
-def show_banner(target: str, mode: str, version: str):
-    banner = r"""
- █████╗ ██████╗ ██████╗ ██╗ ██╗███████╗ 
-██╔══██╗██╔══██╗██╔════╝ ██║ ██║██╔════╝ 
-███████║██████╔╝██║ ███╗██║ ██║███████╗ 
-██╔══██║██╔══██╗██║ ██║██║ ██║╚════██║ 
-██║ ██║ ██║  ██║╚██████╔╝╚██████╔╝███████║ 
-╚═╝ ╚═╝ ╚═╝  ╚═╝ ╚═════╝ ╚═════╝ ╚══════╝ 
+BANNER = r"""
+ █████╗ ██████╗  ██████╗ ██╗   ██╗███████╗
+██╔══██╗██╔══██╗██╔════╝ ██║   ██║██╔════╝
+███████║██████╔╝██║  ███╗██║   ██║███████╗
+██╔══██║██╔══██╗██║   ██║██║   ██║╚════██║
+██║  ██║██║  ██║╚██████╔╝╚██████╔╝███████║
+╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝  ╚═════╝ ╚══════╝
+"""
 
-    Automatic Parameter Discovery Engine
-    """
 
-    print(banner)
-    print(f"    Version : {version}")
-    print(f"    Target  : {target}")
-    print(f"    Mode    : {mode}")
-    print("-" * 55)
+def show_banner(target: str, mode: str, version: str = "v1.0"):
+    print(BANNER)
+    print("┌──────────────────────────────────────────────────────┐")
+    print("│ APDE - Automatic Parameter Discovery Engine         │")
+    print("│ Intelligent Parameter Behavior Scanner              │")
+    print(f"│ Version : {version:<42}│")
+    print(f"│ Mode    : {mode:<42}│")
+    print(f"│ Target  : {target:<42}│")
+    print("└──────────────────────────────────────────────────────┘")
+    print()
 
 
 def validate_url(url: str):
