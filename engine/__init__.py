@@ -1,21 +1,19 @@
 """
-ARGUS Engine Package
-Parameter Intelligence Scanner
+APDE - Advanced Parameter Discovery Engine
+
+Modular parameter intelligence scanner.
 """
 
+from .config import ScanConfig
+from .http_client import HTTPClient
+from .analyzer import ResponseAnalyzer
 from .scanner import APDEScanner
-from .reporting import Reporter
-from .utils import show_banner, validate_url, normalize_url
-from .core import RequestEngine, Injector, Analyzer
-
 
 __all__ = [
+    "ScanConfig",
+    "HTTPClient",
+    "ResponseAnalyzer",
     "APDEScanner",
-    "Reporter",
-    "show_banner",
-    "validate_url",
-    "normalize_url",
-    "RequestEngine",
-    "Injector",
-    "Analyzer",
 ]
+
+__version__ = "1.0.0"
