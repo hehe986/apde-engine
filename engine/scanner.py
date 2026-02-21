@@ -1,7 +1,7 @@
 import time
 from typing import List, Dict
 
-from analyzer import ResponseAnalyzer
+from .analyzer import ResponseAnalyzer
 from http_client import HTTPClient
 from config import ScanConfig
 
@@ -270,3 +270,4 @@ class APDEScanner:
                 )
 
         return findings
+
