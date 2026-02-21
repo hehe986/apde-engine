@@ -1,102 +1,272 @@
-from .core import RequestEngine, Injector, Analyzer
+import time
+from typing import List, Dict
+
+from analyzer import ResponseAnalyzer
+from http_client import HTTPClient
+from config import ScanConfig
 
 
 class APDEScanner:
+    """
+    Main scanning orchestrator.
+    Responsible for:
+    - baseline generation
+    - payload injection
+    - calling analyzer
+    - respecting config rules
+    """
 
-    def __init__(self, target: str, timeout=10, proxy=None):
-        self.target = target
-        self.engine = RequestEngine(timeout=timeout, proxy=proxy)
-        self.injector = Injector()
-        self.analyzer = Analyzer()
+    def __init__(self, config: ScanConfig):
+        config.validate()
 
-    def baseline(self):
-        return self.engine.send("GET", self.target)
+        self.config = config
+        self.client = HTTPClient(
+            timeout=config.timeout,
+            verify_ssl=config.verify_ssl,
+            proxy=config.proxy,
+        )
 
-    def scan_get(self, wordlist: list):
+        self.analyzer = ResponseAnalyzer()
+        self.rate_limit_hits = 0
+
+    # ===============================
+    # Baseline Handling
+    # ===============================
+
+    def baseline(self, mode: str = "GET"):
+        if mode == "POST":
+            return self.client.send("POST", self.config.target, data={})
+
+        elif mode == "JSON":
+            return self.client.send("POST", self.config.target, json={})
+
+        else:
+            return self.client.send("GET", self.config.target)
+
+    # ===============================
+    # Core Scan Logic
+    # ===============================
+
+    def scan_get(self, wordlist: List[str]) -> List[Dict]:
+        print("[*] Starting GET parameter scan...")
+
+        base = self.baseline("GET")
+        if not base:
+            print("[-] Failed to obtain baseline.")
+            return []
+
         findings = []
-        base = self.baseline()
 
         for param in wordlist:
-            response = self.engine.send(
+            time.sleep(self.config.delay)
+
+            response = self.client.send(
                 "GET",
-                self.target,
-                params=self.injector.build_get(param)
+                self.config.target,
+                params={param: "apde_test"},
             )
 
-            result = self.analyzer.compare(base, response)
+            if not response:
+                continue
 
-            if self.analyzer.is_interesting(result):
-                findings.append({
-                    "method": "GET",
-                    "parameter": param,
-                    "analysis": result
-                })
+            analysis = self.analyzer.compare(base, response)
+
+            if analysis.get("rate_limited"):
+                self.rate_limit_hits += 1
+                print("[!] Rate limit detected")
+
+                if (
+                    self.config.stop_on_rate_limit
+                    and self.rate_limit_hits >= self.config.max_rate_limit_hits
+                ):
+                    print("[!] Stopping scan due to repeated rate limiting.")
+                    break
+
+            if (
+                analysis["status_changed"]
+                or analysis["length_changed"]
+                or analysis["fingerprint_changed"]
+            ):
+                findings.append(
+                    {
+                        "type": "GET",
+                        "parameter": param,
+                        "analysis": analysis,
+                        "reflection": self.analyzer.detect_reflection(
+                            response, "apde_test"
+                        ),
+                    }
+                )
 
         return findings
 
-    def scan_post(self, wordlist: list):
+    # ===============================
+    # POST Scan
+    # ===============================
+
+    def scan_post(self, wordlist: List[str]) -> List[Dict]:
+        print("[*] Starting POST parameter scan...")
+
+        base = self.baseline("POST")
+        if not base:
+            print("[-] Failed to obtain baseline.")
+            return []
+
         findings = []
-        base = self.baseline()
 
         for param in wordlist:
-            response = self.engine.send(
+            time.sleep(self.config.delay)
+
+            response = self.client.send(
                 "POST",
-                self.target,
-                data=self.injector.build_post(param)
+                self.config.target,
+                data={param: "apde_test"},
             )
 
-            result = self.analyzer.compare(base, response)
+            if not response:
+                continue
 
-            if self.analyzer.is_interesting(result):
-                findings.append({
-                    "method": "POST",
-                    "parameter": param,
-                    "analysis": result
-                })
+            analysis = self.analyzer.compare(base, response)
+
+            if analysis.get("rate_limited"):
+                self.rate_limit_hits += 1
+                print("[!] Rate limit detected")
+
+                if (
+                    self.config.stop_on_rate_limit
+                    and self.rate_limit_hits >= self.config.max_rate_limit_hits
+                ):
+                    print("[!] Stopping scan due to repeated rate limiting.")
+                    break
+
+            if (
+                analysis["status_changed"]
+                or analysis["length_changed"]
+                or analysis["fingerprint_changed"]
+            ):
+                findings.append(
+                    {
+                        "type": "POST",
+                        "parameter": param,
+                        "analysis": analysis,
+                        "reflection": self.analyzer.detect_reflection(
+                            response, "apde_test"
+                        ),
+                    }
+                )
 
         return findings
 
-    def scan_json(self, wordlist: list):
+    # ===============================
+    # JSON Scan
+    # ===============================
+
+    def scan_json(self, wordlist: List[str]) -> List[Dict]:
+        print("[*] Starting JSON parameter scan...")
+
+        base = self.baseline("JSON")
+        if not base:
+            print("[-] Failed to obtain baseline.")
+            return []
+
         findings = []
-        base = self.baseline()
 
         for param in wordlist:
-            response = self.engine.send(
+            time.sleep(self.config.delay)
+
+            response = self.client.send(
                 "POST",
-                self.target,
-                json=self.injector.build_json(param)
+                self.config.target,
+                json={param: "apde_test"},
             )
 
-            result = self.analyzer.compare(base, response)
+            if not response:
+                continue
 
-            if self.analyzer.is_interesting(result):
-                findings.append({
-                    "method": "JSON",
-                    "parameter": param,
-                    "analysis": result
-                })
+            analysis = self.analyzer.compare(base, response)
+
+            if analysis.get("rate_limited"):
+                self.rate_limit_hits += 1
+                print("[!] Rate limit detected")
+
+                if (
+                    self.config.stop_on_rate_limit
+                    and self.rate_limit_hits >= self.config.max_rate_limit_hits
+                ):
+                    print("[!] Stopping scan due to repeated rate limiting.")
+                    break
+
+            if (
+                analysis["status_changed"]
+                or analysis["length_changed"]
+                or analysis["fingerprint_changed"]
+            ):
+                findings.append(
+                    {
+                        "type": "JSON",
+                        "parameter": param,
+                        "analysis": analysis,
+                        "reflection": self.analyzer.detect_reflection(
+                            response, "apde_test"
+                        ),
+                    }
+                )
 
         return findings
 
-    def scan_header(self, wordlist: list):
-        findings = []
-        base = self.baseline()
+    # ===============================
+    # HEADER Scan
+    # ===============================
 
-        for param in wordlist:
-            headers = self.injector.build_header(param)
-            response = self.engine.send(
+    def scan_header(self, wordlist: List[str]) -> List[Dict]:
+        print("[*] Starting Header injection scan...")
+
+        base = self.baseline("GET")
+        if not base:
+            print("[-] Failed to obtain baseline.")
+            return []
+
+        findings = []
+
+        for header in wordlist:
+            time.sleep(self.config.delay)
+
+            custom_headers = self.client.session.headers.copy()
+            custom_headers.update({header: "apde_test"})
+
+            response = self.client.send(
                 "GET",
-                self.target,
-                headers=headers
+                self.config.target,
+                headers=custom_headers,
             )
 
-            result = self.analyzer.compare(base, response)
+            if not response:
+                continue
 
-            if self.analyzer.is_interesting(result):
-                findings.append({
-                    "method": "HEADER",
-                    "parameter": param,
-                    "analysis": result
-                })
+            analysis = self.analyzer.compare(base, response)
+
+            if analysis.get("rate_limited"):
+                self.rate_limit_hits += 1
+                print("[!] Rate limit detected")
+
+                if (
+                    self.config.stop_on_rate_limit
+                    and self.rate_limit_hits >= self.config.max_rate_limit_hits
+                ):
+                    print("[!] Stopping scan due to repeated rate limiting.")
+                    break
+
+            if (
+                analysis["status_changed"]
+                or analysis["length_changed"]
+                or analysis["fingerprint_changed"]
+            ):
+                findings.append(
+                    {
+                        "type": "HEADER",
+                        "header": header,
+                        "analysis": analysis,
+                    }
+                )
 
         return findings
