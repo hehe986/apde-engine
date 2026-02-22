@@ -60,10 +60,32 @@ class HTTPClient:
                 json=json,
                 headers=headers,
                 timeout=self.timeout,
-                verify=self.verify_ssl,  # ✅ gunakan certifi
+                verify=self.verify_ssl,
                 allow_redirects=True,
             )
             return response
+
+        except requests.exceptions.SSLError as ssl_err:
+            print(f"[SSL WARNING] {ssl_err}")
+            print("[*] Retrying without SSL verification...")
+
+            try:
+                response = self.session.request(
+                    method=method.upper(),
+                    url=url,
+                    params=params,
+                    data=data,
+                    json=json,
+                    headers=headers,
+                    timeout=self.timeout,
+                    verify=False,  # fallback, ignore SSL
+                    allow_redirects=True,
+                )
+                return response
+
+            except requests.exceptions.RequestException as e:
+                print(f"[HTTP ERROR] {e}")
+                return None
 
         except requests.exceptions.RequestException as e:
             print(f"[HTTP ERROR] {e}")
