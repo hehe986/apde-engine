@@ -7,6 +7,9 @@ APDE Engine is a lightweight and extensible parameter discovery framework design
 
 Built with a modular architecture and a clean CLI interface, APDE Engine provides a structured and scalable approach to parameter analysis.
 
+![Logo](argus.png)
+
+
 ---
 
 ## 🚀 Why APDE Engine?
