@@ -1,7 +1,9 @@
 import requests
 import certifi
+import urllib3
 from typing import Optional, Dict, Any
 
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 class HTTPClient:
     """
