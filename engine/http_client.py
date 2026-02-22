@@ -1,4 +1,5 @@
 import requests
+import certifi
 from typing import Optional, Dict, Any
 
 
@@ -17,7 +18,9 @@ class HTTPClient:
     ):
         self.session = requests.Session()
         self.timeout = timeout
-        self.verify_ssl = verify_ssl
+
+        # Jika verify_ssl True, gunakan certifi; kalau False, tetap False
+        self.verify_ssl = certifi.where() if verify_ssl else False
 
         if default_headers:
             self.session.headers.update(default_headers)
@@ -46,9 +49,8 @@ class HTTPClient:
         headers: Optional[Dict[str, str]] = None,
     ):
         """
-        Send HTTP request safely.
+        Send HTTP request safely with certifi SSL bundle.
         """
-
         try:
             response = self.session.request(
                 method=method.upper(),
@@ -58,7 +60,7 @@ class HTTPClient:
                 json=json,
                 headers=headers,
                 timeout=self.timeout,
-                verify=self.verify_ssl,
+                verify=self.verify_ssl,  # ✅ gunakan certifi
                 allow_redirects=True,
             )
             return response
