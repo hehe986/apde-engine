@@ -16,7 +16,8 @@ class ResponseAnalyzer:
         if not response:
             return ""
 
-        return hashlib.md5(response.content).hexdigest()
+        # Using SHA3-256 instead of MD5 for stronger hashing
+        return hashlib.sha3_256(response.content).hexdigest()
 
     @staticmethod
     def compare(baseline, new) -> Dict[str, Any]:
